@@ -8,6 +8,8 @@ async function loadData() {
 } 
 
 const manual_blacklist = ["including", "these", "their", "are", "have", "they", "such", "the", "a", "and", "cannot", "contains", "called", "own", "in", "into"]
+let currentString = localStorage.getItem("currentString")
+let rowsAdded = 8
 
 const categories = {
     "Literature" : {
@@ -166,11 +168,65 @@ function countNGrams(tossups) {
     return {"words" : words, "bigrams" : bigrams, "trigrams" : trigrams};
 }
 
+function updateTable(){
+    indices = currentString.split("\n");
+
+    console.log(currentString);
+
+    for (let i = 0; i < rowsAdded; i++){
+        rowElement = document.getElementById("Row" + String(i+1));
+        console.log("Row" + String(i+1));
+        rowElement.style.display = "none";
+    }
+
+    for (let i = 0; i < indices.length; i++){
+        row = indices[i].split(", ");
+
+        if (currentString==""){
+            return
+        }
+
+        if (i >= rowsAdded-1){
+            rowsAdded += 1;
+            let original = document.getElementById("Row" + String(i));
+
+            let clone = original.cloneNode(true);
+            clone.id = "Row" + String(i+1);
+            original.parentNode.insertBefore(clone, original.nextSibling);
+
+            if (i < 10){
+                clone.querySelectorAll('[id]').forEach(element => {
+                    element.id = element.id.slice(0, 6) + String(i+1) + element.id.slice(7,8)
+                });
+            } else if (i < 100) {
+                clone.querySelectorAll('[id]').forEach(element => {
+                    element.id = element.id.slice(0, 6) + String(i+1) + element.id.slice(8,9)
+                });
+            } else {
+                clone.querySelectorAll('[id]').forEach(element => {
+                    element.id = element.id.slice(0, 6) + String(i+1) + element.id.slice(9,10)
+                });
+            }
+        }
+
+        answer = document.getElementById("Answer" + String(i+1) + "A");
+        hint = document.getElementById("Answer" + String(i+1) + "B");
+        rowElement = document.getElementById("Row" + String(i+1));
+
+        answer.textContent = row[0];
+        hint.textContent = row[1];
+        rowElement.style.display = "";
+    }
+}
+
 async function main() {
     // Loading Data
     console.time("loading")
     const data = await loadData();
     console.timeEnd("loading")
+
+    // Update our Table from LocalData
+    updateTable();
 
     // Pre-calculate n-grams
     console.time("ngram")
@@ -361,8 +417,20 @@ async function main() {
         console.log(finalBigramList);
         console.log(trigrams_list);
 
-        const final_string = word_string + "\n" + bigram_string + "\n" + trigram_string
+        const final_string = word_string + (word_string && "\n" || "") + bigram_string + (bigram_string && "\n" || "")+ trigram_string
         navigator.clipboard.writeText(final_string)
+
+        if (currentString == ""){
+            currentString = final_string
+        } else {
+            currentString += "\n" + final_string
+        }
+
+        // Update persistent storage
+        localStorage.setItem("currentString", currentString)
+
+        // Update our Table
+        updateTable();
     }
 
     // Listener Functions
@@ -377,6 +445,12 @@ async function main() {
             fieldElement.value = fields[i];
             fieldElement.style.visibility = "visible";
         }
+    }
+
+    function clear(){
+        currentString = ""
+        localStorage.setItem("currentString", currentString)
+        updateTable()
     }
 
     function categoryChanged(){
@@ -425,7 +499,14 @@ async function main() {
         altcategoryField.style.color = reset && "rgb(165, 165, 165)" || "rgb(0,0,0)";
     }
 
+    function exportAllFunc(){
+        navigator.clipboard.writeText(currentString);
+    }
+
     // Important Elements
+    const clearButton = document.getElementById("Clear")
+    clearButton.addEventListener("click", clear)
+
     const findButton = document.getElementById("FindButton");
     findButton.addEventListener("click", onClick)
 
@@ -437,6 +518,9 @@ async function main() {
 
     const altcategoryField = document.getElementById("AltcategoryField");
     altcategoryField.addEventListener("change", altcategoryChange)
+
+    const exportAll = document.getElementById("ExportAll");
+    exportAll.addEventListener("click", exportAllFunc)
 
     const answerElement = document.getElementById("AnswerField");
     const minimumElement = document.getElementById("MinimumField");
