@@ -8,7 +8,7 @@ async function loadData() {
 } 
 
 const manual_blacklist = ["including", "these", "their", "are", "have", "they", "such", "the", "a", "and", "cannot", "contains", "called", "own", "in", "into"]
-let currentString = localStorage.getItem("currentString")
+let currentString = localStorage.getItem("currentString") || ""
 let rowsAdded = 8
 
 const categories = {
@@ -171,11 +171,8 @@ function countNGrams(tossups) {
 function updateTable(){
     indices = currentString.split("\n");
 
-    console.log(currentString);
-
     for (let i = 0; i < rowsAdded; i++){
         rowElement = document.getElementById("Row" + String(i+1));
-        console.log("Row" + String(i+1));
         rowElement.style.display = "none";
     }
 
