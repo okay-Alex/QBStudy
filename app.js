@@ -171,9 +171,13 @@ function countNGrams(tossups) {
 function updateTable(){
     indices = currentString.split("\n");
 
+    // console.log("Rows Added: " + String(rowsAdded));
+
     for (let i = 0; i < rowsAdded; i++){
         rowElement = document.getElementById("Row" + String(i+1));
-        rowElement.style.display = "none";
+        if (rowElement != null){
+            rowElement.style.display = "none";
+        }
     }
 
     for (let i = 0; i < indices.length; i++){
